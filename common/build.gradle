@@ -1,0 +1,8 @@
+apply plugin: 'war'
+
+dependencies {
+    compile 'com.sun.jersey.contribs:jersey-guice:1.19.4'
+    compile 'io.dropwizard.metrics:metrics-core:3.2.3'
+
+    providedCompile 'javax.servlet:javax.servlet-api:4.0.0'
+}
