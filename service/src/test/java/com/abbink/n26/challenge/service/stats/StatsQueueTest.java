@@ -1,8 +1,10 @@
 package com.abbink.n26.challenge.service.stats;
 
+import com.abbink.n26.challenge.service.data.Transaction;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,7 +43,7 @@ public class StatsQueueTest {
     private int addToQueue(StatsQueue queue, double[] values, int addIndex, int n) {
         int maxIndex = Math.min(addIndex + n, values.length);
         for (int i = addIndex; i < maxIndex; i++) {
-            queue.add(BigDecimal.valueOf(values[i]));
+            queue.add(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
         }
         return maxIndex;
     }
@@ -55,7 +57,7 @@ public class StatsQueueTest {
     private int removeFromQueue(StatsQueue queue, double[] values, int removeIndex, int n) {
         int maxIndex = Math.min(removeIndex + n, values.length);
         for (int i = removeIndex; i < maxIndex; i++) {
-            assertThat(queue.remove(), comparesEqualTo(BigDecimal.valueOf(values[i])));
+            assertThat(queue.remove().getAmount(), comparesEqualTo(BigDecimal.valueOf(values[i])));
         }
         return maxIndex;
     }
@@ -74,7 +76,7 @@ public class StatsQueueTest {
 
         // add things to queue
         for (int i = 0; i < values.length; i++) {
-            queue.add(BigDecimal.valueOf(values[i]));
+            queue.add(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(queue.getAvg(), comparesEqualTo(BigDecimal.valueOf(buildupAverages[i])));
         }
 
@@ -91,6 +93,24 @@ public class StatsQueueTest {
     }
 
     @Test
+    public void combinedAverageWorks() {
+        StatsQueue queue = new StatsQueue();
+        queue.add(new Transaction(BigDecimal.ONE, Instant.now()));
+        queue.add(new Transaction(BigDecimal.ONE, Instant.now()));
+        queue.add(new Transaction(BigDecimal.ONE, Instant.now()));
+        queue.add(new Transaction(BigDecimal.ONE, Instant.now()));
+        queue.add(new Transaction(BigDecimal.ONE, Instant.now()));
+        queue.add(new Transaction(BigDecimal.ONE, Instant.now()));
+
+        // Trigger moving everything over into the outQueue by removing one item.
+        // This leaves an avg of (1+1+1+1+1+10)/6 = 2.5
+        queue.remove();
+        queue.add(new Transaction(BigDecimal.TEN, Instant.now()));
+
+        assertThat(queue.getAvg(), comparesEqualTo(BigDecimal.valueOf(2.5)));
+    }
+
+    @Test
     public void runningSumWorks() {
         double[] values = new double[] {10, 20, 30};
         double[] buildupSums = new double[] {10, 30, 60};
@@ -104,7 +124,7 @@ public class StatsQueueTest {
 
         // add things to queue
         for (int i = 0; i < values.length; i++) {
-            queue.add(BigDecimal.valueOf(values[i]));
+            queue.add(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(queue.getSum(), comparesEqualTo(BigDecimal.valueOf(buildupSums[i])));
         }
 
@@ -134,7 +154,7 @@ public class StatsQueueTest {
 
         // add things to queue
         for (int i = 0; i < values.length; i++) {
-            queue.add(BigDecimal.valueOf(values[i]));
+            queue.add(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(queue.getMin(), comparesEqualTo(BigDecimal.valueOf(buildupMins[i])));
         }
 
@@ -164,7 +184,7 @@ public class StatsQueueTest {
 
         // add things to queue
         for (int i = 0; i < values.length; i++) {
-            queue.add(BigDecimal.valueOf(values[i]));
+            queue.add(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(queue.getMax(), comparesEqualTo(BigDecimal.valueOf(buildupMaxs[i])));
         }
 

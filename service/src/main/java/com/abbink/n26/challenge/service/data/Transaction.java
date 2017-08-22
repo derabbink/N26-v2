@@ -1,33 +1,23 @@
 package com.abbink.n26.challenge.service.data;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 public class Transaction {
-    private double amount;
-    private String type;
-    private Long parentId;
+    private BigDecimal amount;
+    private Instant timestamp;
 
-    public Transaction(double amount, String type) {
-        this(amount, type, null);
-    }
-
-    public Transaction(
-            double amount,
-            String type,
-            Long parentId
-    ) {
+    public Transaction(BigDecimal amount, Instant timestamp) {
         this.amount = amount;
-        this.type = type;
-        this.parentId = parentId;
+        this.timestamp = timestamp;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public String getType() {
-        return type;
+    public Instant getTimestamp() {
+        return timestamp;
     }
 
-    public Long getParentId() {
-        return parentId;
-    }
 }

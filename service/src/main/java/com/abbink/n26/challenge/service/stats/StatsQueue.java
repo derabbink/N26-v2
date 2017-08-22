@@ -1,5 +1,6 @@
 package com.abbink.n26.challenge.service.stats;
 
+import com.abbink.n26.challenge.service.data.Transaction;
 import com.google.common.collect.Iterators;
 
 import java.math.BigDecimal;
@@ -12,12 +13,12 @@ import java.util.Queue;
 
 /**
  * A queue based on two {@link StatsStack}s.
- * {@link #add(BigDecimal)} takes O(1) time, and adds to the {@link #inStack}.
+ * {@link #add(Transaction)} takes O(1) time, and adds to the {@link #inStack}.
  * {@link #remove()}/{@link #poll()} takes O(n) time, if the {@link #outStack} is empty. If so, it moves the
  * {@link #inStack} into the {@link #outStack} first (which takes that long). If the {@link #outStack} is not empty,
  * {@link #remove()}/{@link #poll()} takes O(1) time as well. The same goes for {@link #peek()}/{@link #element()}.
  */
-public class StatsQueue implements Queue<BigDecimal>, Stats {
+public class StatsQueue implements Queue<Transaction>, Stats {
     private StatsStack inStack;
     private StatsStack outStack;
 
@@ -27,28 +28,28 @@ public class StatsQueue implements Queue<BigDecimal>, Stats {
     }
 
     @Override
-    public boolean add(BigDecimal value) {
+    public boolean add(Transaction value) {
         inStack.push(value);
         return true;
     }
 
     @Override
-    public boolean addAll(Collection<? extends BigDecimal> collection) {
-        for (BigDecimal value : collection) {
+    public boolean addAll(Collection<? extends Transaction> collection) {
+        for (Transaction value : collection) {
             inStack.push(value);
         }
         return true;
     }
 
     @Override
-    public boolean offer(BigDecimal value) {
+    public boolean offer(Transaction value) {
         add(value);
         return true;
     }
 
     @Override
-    public BigDecimal remove() {
-        BigDecimal result = poll();
+    public Transaction remove() {
+        Transaction result = poll();
         if (result == null) {
             throw new NoSuchElementException();
         }
@@ -56,7 +57,7 @@ public class StatsQueue implements Queue<BigDecimal>, Stats {
     }
 
     @Override
-    public BigDecimal poll() {
+    public Transaction poll() {
         moveInStackToOutStackIfNeeded();
         if (outStack.isEmpty()) {
             return null;
@@ -65,8 +66,8 @@ public class StatsQueue implements Queue<BigDecimal>, Stats {
     }
 
     @Override
-    public BigDecimal element() {
-        BigDecimal result = peek();
+    public Transaction element() {
+        Transaction result = peek();
         if (result == null) {
             throw new NoSuchElementException();
         }
@@ -74,7 +75,7 @@ public class StatsQueue implements Queue<BigDecimal>, Stats {
     }
 
     @Override
-    public BigDecimal peek() {
+    public Transaction peek() {
         moveInStackToOutStackIfNeeded();
         if (outStack.isEmpty()) {
             return null;
@@ -113,15 +114,15 @@ public class StatsQueue implements Queue<BigDecimal>, Stats {
      * WARNING: This returns a destructive iterator: Iterating through all values empties out the queue.
      */
     @Override
-    public Iterator<BigDecimal> iterator() {
-        return new Iterator<BigDecimal>() {
+    public Iterator<Transaction> iterator() {
+        return new Iterator<Transaction>() {
             @Override
             public boolean hasNext() {
                 return !StatsQueue.this.isEmpty();
             }
 
             @Override
-            public BigDecimal next() {
+            public Transaction next() {
                 return StatsQueue.this.remove();
             }
         };
@@ -129,7 +130,7 @@ public class StatsQueue implements Queue<BigDecimal>, Stats {
 
     @Override
     public Object[] toArray() {
-        return Iterators.toArray(iterator(), BigDecimal.class);
+        return Iterators.toArray(iterator(), Transaction.class);
     }
 
     @Override
@@ -221,6 +222,7 @@ public class StatsQueue implements Queue<BigDecimal>, Stats {
         }
         return inStack.getAvg().multiply(BigDecimal.valueOf(inStack.size()))
                 .add(outStack.getAvg().multiply(BigDecimal.valueOf(outStack.size())))
+                .divide(BigDecimal.valueOf(inStack.size() + outStack.size()), 2*StatsStack.SCALE, RoundingMode.HALF_UP)
                 .setScale(StatsStack.SCALE, RoundingMode.HALF_UP);
     }
 

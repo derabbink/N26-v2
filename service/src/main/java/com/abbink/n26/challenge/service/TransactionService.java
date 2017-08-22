@@ -1,66 +1,94 @@
 package com.abbink.n26.challenge.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.temporal.TemporalUnit;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import com.abbink.n26.challenge.service.data.Statistics;
 import com.abbink.n26.challenge.service.data.Transaction;
-import com.abbink.n26.challenge.service.storage.TransactionStore;
-import com.abbink.n26.challenge.service.storage.TypeStore;
+import com.abbink.n26.challenge.service.stats.StatsQueue;
+
+import static com.abbink.n26.challenge.service.data.Statistics.SCALE;
 
 /**
- * This class takes care of coordinating data reads & writes across different storage components.
- * It makes sure the global data representation is consistent, and it acts as a thread-safety barrier.
- * The {@link #transactionStore} makes sure the corpus of transactions (and the trees they form) is
- * consistent. The {@link #typeStore} is merely a means to speed up the per-type retrieval.
+ * This class takes care of coordinating data reads & writes.
+ * It essentially encapsulates the {@link StatsQueue} inside it, adds validation, a {@link #flushOld(Instant)} helper
+ * method, and thread safety.
  */
 @Singleton
 public class TransactionService {
-    private TransactionStore transactionStore;
-    private TypeStore typeStore;
+    private ReentrantLock lock;
+    private StatsQueue statsQueue;
 
     @Inject
-    public TransactionService(
-            TransactionStore transactionStore,
-            TypeStore typeStore
-    ) {
-        this.transactionStore = transactionStore;
-        this.typeStore = typeStore;
+    public TransactionService(StatsQueue statsQueue) {
+        this.lock = new ReentrantLock();
+        this.statsQueue = statsQueue;
     }
 
-    private void add(long id, Transaction t) {
-        transactionStore.add(id, t);
-        typeStore.add(t.getType(), id);
-    }
-
-    private void update(long id, Transaction t) {
-        Transaction oldT = transactionStore.get(id);
-        transactionStore.update(id, t);
-        if (!t.getType().equals(oldT.getType())) {
-            typeStore.delete(oldT.getType(), id);
-            typeStore.add(t.getType(), id);
+    public void add(Transaction transaction) {
+        lock.lock();
+        try {
+            // do this inside the lock, because acquiring it might take some time
+            if (!isTransactionAllowed(transaction)) {
+                throw new TransactionExpiredError();
+            }
+            statsQueue.add(transaction);
+        } finally {
+            lock.unlock();
         }
     }
 
-    public synchronized void storeTransaction(long id, Transaction t) {
-        if (transactionStore.contains(id)) {
-            update(id, t);
-        } else {
-            add(id, t);
+    public boolean isTransactionAllowed(Transaction transaction) {
+        return !transaction.getTimestamp().isBefore(Instant.now().minusSeconds(60));
+    }
+
+    /**
+     * This takes all items out of the {@link #statsQueue}, and only adds unexpired items back in.
+     * The performance is O(n), but that's not worse than the overall performance of all calls to
+     * {@link StatsQueue#remove()}.
+     * @param threshold Everything up to (and including) this timestamp will be removed“
+     */
+    public void flushOld(Instant threshold) {
+        lock.lock();
+        try { // Just in case something odd goes wrong
+            int count = statsQueue.size();
+            for (int i = 0; i < count; i++) {
+                // Take everything out and only put the relevant stuff back in
+                Transaction transaction = statsQueue.remove();
+                if (transaction.getTimestamp().isAfter(threshold)) {
+                    statsQueue.add(transaction);
+                }
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
-    public synchronized Transaction getTransaction(long id) {
-        return transactionStore.get(id);
+    public Statistics getStatistics() {
+        lock.lock();
+        try { // Just in case the conversion throws
+            BigDecimal min = statsQueue.getMin();
+            BigDecimal max = statsQueue.getMax();
+            return new Statistics(
+                    statsQueue.getAvg().setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
+                    statsQueue.getSize(),
+                    max == null ? null : max.setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
+                    min == null ? null : min.setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
+                    statsQueue.getSum().setScale(SCALE, RoundingMode.HALF_UP).doubleValue());
+        } finally {
+            lock.unlock();
+        }
     }
 
-    public synchronized Collection<Long> getTransactionIdsByType(@Nonnull String type) {
-        return typeStore.getIdsByType(type);
-    }
-
-    public synchronized double getTransactionSumForSubtree(long rootId) {
-        return transactionStore.getSubtreeSum(rootId);
+    public final class TransactionExpiredError extends RuntimeException {
     }
 }

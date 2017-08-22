@@ -9,6 +9,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 /**
  * A container type specifically designed to pass back-and-forth
  * between API clients in JSON format.
@@ -16,26 +19,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class JsonTransaction {
     private double amount;
-    private String type;
-    private Long parentId;
-
-    public static JsonTransaction fromTransaction(Transaction t) {
-        return new JsonTransaction(t.getAmount(), t.getType(), t.getParentId());
-    }
-
-    public JsonTransaction(double amount, String type) {
-        this(amount, type, null);
-    }
+    private long timestamp;
 
     @JsonCreator
     public JsonTransaction(
             @JsonProperty("amount") double amount,
-            @JsonProperty("type") @Nonnull String type,
-            @JsonProperty("parent_id") Long parentId
+            @JsonProperty("timestamp") long timestamp
     ) {
         this.amount = amount;
-        this.type = type;
-        this.parentId = parentId;
+        this.timestamp = timestamp;
     }
 
     @JsonGetter
@@ -44,16 +36,13 @@ public class JsonTransaction {
     }
 
     @JsonGetter
-    public String getType() {
-        return type;
-    }
-
-    @JsonGetter("parent_id")
-    public Long getParentId() {
-        return parentId;
+    public long getTimestamp() {
+        return timestamp;
     }
 
     public Transaction toTransaction() {
-        return new Transaction(amount, type, parentId);
+        return new Transaction(
+                BigDecimal.valueOf(getAmount()),
+                Instant.ofEpochMilli(getTimestamp()));
     }
 }

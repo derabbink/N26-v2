@@ -10,7 +10,6 @@ import javax.ws.rs.core.Response.Status;
 import com.abbink.n26.challenge.api.error.InvalidInputError;
 import com.abbink.n26.challenge.api.error.JsonError;
 import com.abbink.n26.challenge.common.error.jersey.SpecializedExceptionMapper;
-import com.abbink.n26.challenge.service.storage.StorageError;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.sun.jersey.api.ParamException;
 
@@ -29,9 +28,6 @@ public class ThrowableMapper implements SpecializedExceptionMapper<Throwable> {
         } catch (JsonMappingException e) {
             return webappErrorMapper.toResponse(new InvalidInputError(e), headers, request);
         } catch (ParamException e) {
-            return webappErrorMapper.toResponse(new InvalidInputError(e), headers, request);
-        } catch (StorageError e) {
-            // this can only happen if the client attempts to create an invalid state.
             return webappErrorMapper.toResponse(new InvalidInputError(e), headers, request);
         } catch (Throwable e) {}
         return Response

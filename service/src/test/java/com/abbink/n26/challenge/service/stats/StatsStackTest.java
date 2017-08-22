@@ -1,10 +1,12 @@
 package com.abbink.n26.challenge.service.stats;
 
+import com.abbink.n26.challenge.service.data.Transaction;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -25,7 +27,7 @@ public class StatsStackTest {
 
         // push things onto stack
         for (int i = 0; i < values.length; i++) {
-            stack.push(BigDecimal.valueOf(values[i]));
+            stack.push(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(stack.getAvg(), comparesEqualTo(BigDecimal.valueOf(averages[i])));
         }
 
@@ -53,7 +55,7 @@ public class StatsStackTest {
 
         // push things onto stack
         for (int i = 0; i < values.length; i++) {
-            stack.push(BigDecimal.valueOf(values[i]));
+            stack.push(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(stack.getMin(), comparesEqualTo(BigDecimal.valueOf(minimums[i])));
         }
 
@@ -81,7 +83,7 @@ public class StatsStackTest {
 
         // push things onto stack
         for (int i = 0; i < values.length; i++) {
-            stack.push(BigDecimal.valueOf(values[i]));
+            stack.push(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(stack.getMax(), comparesEqualTo(BigDecimal.valueOf(maximums[i])));
         }
 
@@ -109,7 +111,7 @@ public class StatsStackTest {
 
         // push things onto stack
         for (int i = 0; i < values.length; i++) {
-            stack.push(BigDecimal.valueOf(values[i]));
+            stack.push(new Transaction(BigDecimal.valueOf(values[i]), Instant.now()));
             assertThat(stack.getSum(), comparesEqualTo(BigDecimal.valueOf(sums[i])));
         }
 
