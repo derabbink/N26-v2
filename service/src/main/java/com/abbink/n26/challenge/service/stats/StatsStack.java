@@ -9,7 +9,7 @@ import java.util.Stack;
 
 /**
  * A stack of {@link BigDecimal}s that maintains {@link Stats}, such as a min, max, avg, sum of all values kept in it.
- * {@link #push(BigDecimal)} and {@link #pop()} take O(1) time.
+ * {@link #push(Transaction)} and {@link #pop()} take O(1) time.
  */
 public class StatsStack extends Stack<Transaction> implements Stats {
     public static final int SCALE = 7;

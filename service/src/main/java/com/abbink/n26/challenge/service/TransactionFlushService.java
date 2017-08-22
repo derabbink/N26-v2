@@ -27,7 +27,7 @@ public class TransactionFlushService {
         long remainingInterval = Math.min(
                 Duration.between(lastRun, Instant.now()).toMillis(),
                 INTERVAL_MILLIS);
-        remainingInterval = Math.max(remainingInterval, 10L);
+        remainingInterval = Math.max(remainingInterval, 10L); // leave a >=10ms gap, so the computer can take a breath
         timer.schedule(new TimerTask(this), remainingInterval);
     }
 
@@ -38,6 +38,10 @@ public class TransactionFlushService {
         reScheduleSelf(now);
     }
 
+    /**
+     * Glue code for {@link Timer} that doesn't cause me to pollute the interface of {@link TransactionFlushService}
+     * with a non-descriptive {@link #run()} method.
+     */
     private static class TimerTask extends java.util.TimerTask {
         private TransactionFlushService flushService;
 
