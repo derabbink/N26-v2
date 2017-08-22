@@ -15,12 +15,14 @@ import javax.inject.Singleton;
 import com.abbink.n26.challenge.service.data.Statistics;
 import com.abbink.n26.challenge.service.data.Transaction;
 import com.abbink.n26.challenge.service.stats.StatsQueue;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class takes care of coordinating data reads & writes.
  * It essentially encapsulates the {@link StatsQueue} inside it, adds validation, a {@link #flushOld(Instant)} helper
  * method, and thread safety.
  */
+@Slf4j
 @Singleton
 public class TransactionService {
     private ReentrantLock lock;
@@ -65,6 +67,10 @@ public class TransactionService {
                 if (transaction.getTimestamp().isAfter(threshold)) {
                     statsQueue.add(transaction);
                 }
+            }
+            int flushed = count - statsQueue.size();
+            if (flushed > 0) {
+                log.info("Flushed {} transactions older than t={}", flushed, threshold);
             }
         } finally {
             lock.unlock();
