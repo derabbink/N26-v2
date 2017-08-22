@@ -16,8 +16,6 @@ import com.abbink.n26.challenge.service.data.Statistics;
 import com.abbink.n26.challenge.service.data.Transaction;
 import com.abbink.n26.challenge.service.stats.StatsQueue;
 
-import static com.abbink.n26.challenge.service.data.Statistics.SCALE;
-
 /**
  * This class takes care of coordinating data reads & writes.
  * It essentially encapsulates the {@link StatsQueue} inside it, adds validation, a {@link #flushOld(Instant)} helper
@@ -76,14 +74,12 @@ public class TransactionService {
     public Statistics getStatistics() {
         lock.lock();
         try { // Just in case the conversion throws
-            BigDecimal min = statsQueue.getMin();
-            BigDecimal max = statsQueue.getMax();
             return new Statistics(
-                    statsQueue.getAvg().setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
+                    statsQueue.getAvg(),
                     statsQueue.getSize(),
-                    max == null ? null : max.setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
-                    min == null ? null : min.setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
-                    statsQueue.getSum().setScale(SCALE, RoundingMode.HALF_UP).doubleValue());
+                    statsQueue.getMax(),
+                    statsQueue.getMin(),
+                    statsQueue.getSum());
         } finally {
             lock.unlock();
         }

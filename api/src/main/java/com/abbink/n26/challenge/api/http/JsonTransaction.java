@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 
 /**
@@ -18,6 +19,8 @@ import java.time.Instant;
  */
 @JsonInclude(Include.NON_NULL)
 public class JsonTransaction {
+    public static final int SCALE = 2;
+
     private double amount;
     private long timestamp;
 
@@ -42,7 +45,7 @@ public class JsonTransaction {
 
     public Transaction toTransaction() {
         return new Transaction(
-                BigDecimal.valueOf(getAmount()),
+                BigDecimal.valueOf(getAmount()).setScale(SCALE, RoundingMode.HALF_UP),
                 Instant.ofEpochMilli(getTimestamp()));
     }
 }

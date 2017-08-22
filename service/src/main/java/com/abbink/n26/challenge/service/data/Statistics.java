@@ -1,15 +1,15 @@
 package com.abbink.n26.challenge.service.data;
 
+import java.math.BigDecimal;
+
 public class Statistics {
-    public static final int SCALE = 2;
+    private BigDecimal avg;
+    private int count;
+    private BigDecimal max;
+    private BigDecimal min;
+    private BigDecimal sum;
 
-    private double avg;
-    private double count;
-    private Double max;
-    private Double min;
-    private double sum;
-
-    public Statistics(double avg, double count, Double max, Double min, double sum) {
+    public Statistics(BigDecimal avg, int count, BigDecimal max, BigDecimal min, BigDecimal sum) {
         this.avg = avg;
         this.count = count;
         this.max = max;
@@ -17,23 +17,23 @@ public class Statistics {
         this.sum = sum;
     }
 
-    public double getAvg() {
+    public BigDecimal getAvg() {
         return avg;
     }
 
-    public double getCount() {
+    public int getCount() {
         return count;
     }
 
-    public Double getMax() {
+    public BigDecimal getMax() {
         return max;
     }
 
-    public Double getMin() {
+    public BigDecimal getMin() {
         return min;
     }
 
-    public double getSum() {
+    public BigDecimal getSum() {
         return sum;
     }
 }

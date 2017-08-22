@@ -12,15 +12,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({"sum", "avg", "max", "min", "count"})
 public class JsonStatistics {
+    public static final int SCALE = 2;
+
     private double avg;
-    private double count;
+    private int count;
     private Double max;
     private Double min;
     private double sum;
 
     public JsonStatistics(
             @JsonProperty("avg") double avg,
-            @JsonProperty("count") double count,
+            @JsonProperty("count") int count,
             @JsonProperty("max") Double max,
             @JsonProperty("min") Double min,
             @JsonProperty("sum") double sum
@@ -36,7 +38,7 @@ public class JsonStatistics {
         return avg;
     }
 
-    public double getCount() {
+    public int getCount() {
         return count;
     }
 

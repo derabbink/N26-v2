@@ -12,6 +12,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import java.math.RoundingMode;
+
+import static com.abbink.n26.challenge.api.http.JsonStatistics.SCALE;
 import static com.abbink.n26.challenge.api.utils.Constants.BASE_PATH;
 
 @Slf4j
@@ -26,10 +29,10 @@ public class StatisticsResource {
     public JsonStatistics get() {
         Statistics stats = transactionService.getStatistics();
         return new JsonStatistics(
-                stats.getAvg(),
+                stats.getAvg().setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
                 stats.getCount(),
-                stats.getMax(),
-                stats.getMin(),
-                stats.getSum());
+                stats.getMax() == null ? null : stats.getMax().setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
+                stats.getMin() == null ? null : stats.getMin().setScale(SCALE, RoundingMode.HALF_UP).doubleValue(),
+                stats.getSum().setScale(SCALE, RoundingMode.HALF_UP).doubleValue());
     }
 }
